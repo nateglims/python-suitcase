@@ -637,6 +637,31 @@ class TestBitFields(unittest.TestCase):
         self.assertEqual(inst.b2, inst2.b2)
         self.assertEqual(inst.remaining, inst2.remaining)
 
+    def test_bitfield_lengths(self):
+        eight_bit_field = BitField(1*8, remainder=BitNum(1*8))
+        eight_bit_inst = eight_bit_field.create_instance(None)
+        eight_bit_inst.remainder = 0x1f
+
+        sio = six.BytesIO()
+        eight_bit_inst.pack(sio)
+        self.assertEqual(sio.getvalue(), b'\x1f')
+
+        sixty_four_bit_field = BitField(8*8, remainder=BitNum(8*8))
+        sixty_four_bit_inst = sixty_four_bit_field.create_instance(None)
+        sixty_four_bit_inst.remainder = 0x1f2f3f4f5f6f7f8f
+
+        sio = six.BytesIO()
+        sixty_four_bit_inst.pack(sio)
+        self.assertEqual(sio.getvalue(), b'\x1f\x2f\x3f\x4f\x5f\x6f\x7f\x8f')
+    
+        seventy_two_bit_field = BitField(9*8, remainder=BitNum(9*8))
+        seventy_two_bit_inst = seventy_two_bit_field.create_instance(None)
+        seventy_two_bit_inst.remainder = 0x1f2f3f4f5f6f7f8f9f
+
+        sio = six.BytesIO()
+        seventy_two_bit_inst.pack(sio)
+        self.assertEqual(sio.getvalue(), b'\x1f\x2f\x3f\x4f\x5f\x6f\x7f\x8f\x9f')
+    
 
 # message where f2 is only defined if f2 is 255
 class Conditional(Structure):

@@ -1034,6 +1034,29 @@ class UBInt64(BaseStructField):
     PACK_FORMAT = UNPACK_FORMAT = b">Q"
 
 
+def ubint_factory(bytes):
+
+    if bytes == 1:
+        return UBInt8
+    elif bytes == 2:
+        return UBInt16
+    elif bytes == 3:
+        return UBInt24
+    elif bytes == 4:
+        return UBInt32
+    elif bytes > 4:
+        import math
+        members = dict()
+        if bytes % 4:
+            members["KEEP_BYTES"] = bytes
+        members["PACK_FORMAT"] = b">" + b"Q" * int(math.ceil(bytes / 8.0))
+        members["UNPACK_FORMAT"] = b">" + b"B" * bytes
+        return type("UBInt" + str(bytes*8), (BaseStructField,), members)
+    else:
+        raise Exception("Nope.")
+
+
+
 # ==============================================================================
 # Signed Big Endian
 # ==============================================================================
@@ -1326,16 +1349,7 @@ class BitField(BaseField):
         self.number_bytes = number_bits // 8
         self.bytes_required = self.number_bytes
         if field is None:
-            field = {
-                1: UBInt8,
-                2: UBInt16,
-                3: UBInt24,
-                4: UBInt32,
-                5: UBInt40,
-                6: UBInt48,
-                7: UBInt56,
-                8: UBInt64,
-            }[self.number_bytes]()
+            field = ubint_factory(self.number_bytes)()
         self._field = field.create_instance(self._parent)
 
         placeholders = []
